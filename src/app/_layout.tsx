@@ -1,16 +1,13 @@
-import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
-import React from 'react';
-import { useColorScheme } from 'react-native';
+import { Stack } from "expo-router";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-import { AnimatedSplashOverlay } from '@/components/animated-icon';
-import AppTabs from '@/components/app-tabs';
+export default function Layout() {
 
-export default function TabLayout() {
-  const colorScheme = useColorScheme();
-  return (
-    <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-      <AnimatedSplashOverlay />
-      <AppTabs />
-    </ThemeProvider>
-  );
+    const {top, bottom} = useSafeAreaInsets();
+
+    return (
+        <Stack>
+            <Stack.Screen name="index" options={{ contentStyle: { paddingTop: top, paddingBottom: bottom }, headerTitle: '' }} />
+        </Stack>
+    );
 }

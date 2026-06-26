@@ -1,98 +1,253 @@
-import * as Device from 'expo-device';
-import { Platform, StyleSheet } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import React, { useEffect, useMemo, useState } from 'react'
+import {
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Switch,
+  Text,
+  View,
+} from 'react-native'
 
-import { AnimatedIcon } from '@/components/animated-icon';
-import { HintRow } from '@/components/hint-row';
-import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
-import { WebBadge } from '@/components/web-badge';
-import { BottomTabInset, MaxContentWidth, Spacing } from '@/constants/theme';
+const alarmSounds = [
+  'Dream Pulse',
+  'Aurora Beat',
+  'Nova Rise',
+  'Electric Wake',
+  'Cosmic Drift',
+]
 
-function getDevMenuHint() {
-  if (Platform.OS === 'web') {
-    return <ThemedText type="small">use browser devtools</ThemedText>;
-  }
-  if (Device.isDevice) {
-    return (
-      <ThemedText type="small">
-        shake device or press <ThemedText type="code">m</ThemedText> in terminal
-      </ThemedText>
-    );
-  }
-  const shortcut = Platform.OS === 'android' ? 'cmd+m (or ctrl+m)' : 'cmd+d';
-  return (
-    <ThemedText type="small">
-      press <ThemedText type="code">{shortcut}</ThemedText>
-    </ThemedText>
-  );
+const getRandomSound = (currentSound: string) => {
+  const options = alarmSounds.filter(sound => sound !== currentSound)
+  return options[Math.floor(Math.random() * options.length)]
 }
 
-export default function HomeScreen() {
+const Index = () => {
+  const [alarmEnabled, setAlarmEnabled] = useState(true)
+  const [currentSound, setCurrentSound] = useState(alarmSounds[0])
+  const [nextTime, setNextTime] = useState('07:00 AM')
+
+  useEffect(() => {
+    if (!alarmEnabled) {
+      return
+    }
+
+    const interval = setInterval(() => {
+      setCurrentSound(prev => getRandomSound(prev))
+    }, 10000)
+
+    return () => clearInterval(interval)
+  }, [alarmEnabled])
+
+  const statusLabel = useMemo(
+    () => (alarmEnabled ? 'Ativo e rotativo' : 'Desativado'),
+    [alarmEnabled]
+  )
+
   return (
-    <ThemedView style={styles.container}>
-      <SafeAreaView style={styles.safeArea}>
-        <ThemedView style={styles.heroSection}>
-          <AnimatedIcon />
-          <ThemedText type="title" style={styles.title}>
-            Welcome to&nbsp;Expo
-          </ThemedText>
-        </ThemedView>
+    <ScrollView style={styles.container} contentContainerStyle={styles.content}>
+      <Text style={styles.brand}>Rotune</Text>
+      <Text style={styles.subtitle}>Alarme rotativo para evitar a acomodação sonora</Text>
 
-        <ThemedText type="code" style={styles.code}>
-          get started
-        </ThemedText>
+      <View style={styles.card}>
+        <View style={styles.cardHeader}>
+          <Text style={styles.cardTitle}>Próximo alarme</Text>
+          <Text style={styles.cardStatus}>{statusLabel}</Text>
+        </View>
 
-        <ThemedView type="backgroundElement" style={styles.stepContainer}>
-          <HintRow
-            title="Try editing"
-            hint={<ThemedText type="code">src/app/index.tsx</ThemedText>}
-          />
-          <HintRow title="Dev tools" hint={getDevMenuHint()} />
-          <HintRow
-            title="Fresh start"
-            hint={<ThemedText type="code">npm run reset-project</ThemedText>}
-          />
-        </ThemedView>
+        <Text style={styles.alarmTime}>{nextTime}</Text>
+        <Text style={styles.cardText}>
+          O som muda automaticamente para manter o seu alarme sempre surpreendente.
+        </Text>
 
-        {Platform.OS === 'web' && <WebBadge />}
-      </SafeAreaView>
-    </ThemedView>
-  );
+        <View style={styles.controlsRow}>
+          <View style={styles.controlBlock}>
+            <Text style={styles.controlLabel}>Modo rotativo</Text>
+            <Switch
+              value={alarmEnabled}
+              onValueChange={setAlarmEnabled}
+              thumbColor={alarmEnabled ? '#FFFFFF' : '#94A3B8'}
+              trackColor={{ false: '#3B4254', true: '#7C4DFF' }}
+            />
+          </View>
+
+          <Pressable style={styles.primaryButton} onPress={() => {}}>
+            <Text style={styles.primaryButtonText}>Ajustar alarme</Text>
+          </Pressable>
+        </View>
+      </View>
+
+      <View style={styles.card}>
+        <Text style={styles.sectionTitle}>Som atual</Text>
+        <View style={styles.soundRow}>
+          <View style={styles.soundBadge}>
+            <Text style={styles.soundBadgeText}>{currentSound}</Text>
+          </View>
+          <Text style={styles.nextText}>Próximo som em breve</Text>
+        </View>
+      </View>
+
+      <View style={styles.card}> 
+        <Text style={styles.sectionTitle}>Sons disponíveis</Text>
+        {alarmSounds.map(sound => (
+          <View key={sound} style={styles.soundItem}>
+            <Text style={styles.soundName}>{sound}</Text>
+            <Text style={styles.soundHint}>{sound === currentSound ? 'Atualmente em uso' : 'Próximo candidato'}</Text>
+          </View>
+        ))}
+      </View>
+
+      <View style={styles.helpCard}>
+        <Text style={styles.helpTitle}>Como funciona</Text>
+        <Text style={styles.helpText}>
+          Quando o alarme estiver ativo, o sistema troca o som de forma aleatória após um tempo para
+          evitar que você se acostume com a mesma melodia.
+        </Text>
+      </View>
+    </ScrollView>
+  )
 }
+
+export default Index
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    justifyContent: 'center',
+    backgroundColor: '#0B1020',
+  },
+  content: {
+    padding: 24,
+    paddingBottom: 48,
+  },
+  brand: {
+    color: '#7C4DFF',
+    fontSize: 32,
+    fontWeight: '800',
+    marginBottom: 8,
+  },
+  subtitle: {
+    color: '#94A3B8',
+    fontSize: 16,
+    marginBottom: 20,
+    lineHeight: 22,
+  },
+  card: {
+    backgroundColor: '#151B2E',
+    borderRadius: 24,
+    padding: 20,
+    marginBottom: 16,
+    shadowColor: '#000',
+    shadowOpacity: 0.16,
+    shadowRadius: 16,
+    shadowOffset: { width: 0, height: 10 },
+  },
+  cardHeader: {
     flexDirection: 'row',
-  },
-  safeArea: {
-    flex: 1,
-    paddingHorizontal: Spacing.four,
+    justifyContent: 'space-between',
     alignItems: 'center',
-    gap: Spacing.three,
-    paddingBottom: BottomTabInset + Spacing.three,
-    maxWidth: MaxContentWidth,
+    marginBottom: 16,
   },
-  heroSection: {
+  cardTitle: {
+    color: '#F8FAFC',
+    fontSize: 18,
+    fontWeight: '700',
+  },
+  cardStatus: {
+    color: '#22D3EE',
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  alarmTime: {
+    color: '#F8FAFC',
+    fontSize: 56,
+    fontWeight: '900',
+    marginBottom: 10,
+  },
+  cardText: {
+    color: '#94A3B8',
+    fontSize: 14,
+    lineHeight: 20,
+    marginBottom: 20,
+  },
+  controlsRow: {
+    flexDirection: 'column',
+  },
+  controlBlock: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
     alignItems: 'center',
-    justifyContent: 'center',
-    flex: 1,
-    paddingHorizontal: Spacing.four,
-    gap: Spacing.four,
+    marginBottom: 16,
   },
-  title: {
-    textAlign: 'center',
+  controlLabel: {
+    color: '#F8FAFC',
+    fontSize: 16,
+    fontWeight: '600',
   },
-  code: {
-    textTransform: 'uppercase',
+  primaryButton: {
+    backgroundColor: '#7C4DFF',
+    borderRadius: 16,
+    paddingVertical: 14,
+    alignItems: 'center',
   },
-  stepContainer: {
-    gap: Spacing.three,
-    alignSelf: 'stretch',
-    paddingHorizontal: Spacing.three,
-    paddingVertical: Spacing.four,
-    borderRadius: Spacing.four,
+  primaryButtonText: {
+    color: '#F8FAFC',
+    fontWeight: '700',
+    fontSize: 16,
   },
-});
+  sectionTitle: {
+    color: '#F8FAFC',
+    fontSize: 16,
+    fontWeight: '700',
+    marginBottom: 14,
+  },
+  soundRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  soundBadge: {
+    backgroundColor: '#7C4DFF',
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    borderRadius: 999,
+  },
+  soundBadgeText: {
+    color: '#F8FAFC',
+    fontWeight: '700',
+    fontSize: 14,
+  },
+  nextText: {
+    color: '#94A3B8',
+    fontSize: 12,
+  },
+  soundItem: {
+    paddingVertical: 14,
+    borderBottomWidth: 1,
+    borderBottomColor: '#212B44',
+  },
+  soundName: {
+    color: '#F8FAFC',
+    fontSize: 15,
+    fontWeight: '600',
+  },
+  soundHint: {
+    color: '#94A3B8',
+    marginTop: 4,
+    fontSize: 13,
+  },
+  helpCard: {
+    backgroundColor: '#151B2E',
+    borderRadius: 24,
+    padding: 20,
+  },
+  helpTitle: {
+    color: '#22D3EE',
+    fontSize: 16,
+    fontWeight: '700',
+    marginBottom: 10,
+  },
+  helpText: {
+    color: '#94A3B8',
+    fontSize: 14,
+    lineHeight: 20,
+  },
+})
